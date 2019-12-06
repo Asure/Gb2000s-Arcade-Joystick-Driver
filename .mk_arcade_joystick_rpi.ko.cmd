@@ -1,0 +1,1 @@
+cmd_/opt/sauce/mk_arcade_joystick_rpi.ko := ld -EL -r  -T /usr/src/linux-headers-3.4.113-sun8i/scripts/module-common.lds --build-id  -o /opt/sauce/mk_arcade_joystick_rpi.ko /opt/sauce/mk_arcade_joystick_rpi.o /opt/sauce/mk_arcade_joystick_rpi.mod.o
