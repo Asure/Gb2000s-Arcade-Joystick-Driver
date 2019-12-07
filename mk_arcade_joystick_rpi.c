@@ -39,6 +39,9 @@
 #include <linux/ioport.h>
 #include <asm/io.h>
 
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+#define HAVE_TIMER_SETUP
+//#endif
 
 MODULE_AUTHOR("Matthieu Proucelle");
 MODULE_DESCRIPTION("Gb2000s Arcade Joystick Driver");
@@ -309,8 +312,16 @@ static void mk_process_packet(struct mk *mk) {
  * mk_timer() initiates reads of console pads data.
  */
 
-static void mk_timer(unsigned long private) {
-  struct mk *mk = (void *) private;
+#ifdef HAVE_TIMER_SETUP
+static void mk_timer(struct timer_list *t)
+{
+  struct mk *mk = from_timer(mk, t, timer);
+#else
+static void mk_timer(unsigned long private)
+{
+    struct mk *mk = (void *) private;
+#endif
+
   mk_process_packet(mk);
   mod_timer(&mk->timer, jiffies + MK_REFRESH_TIME);
 }
@@ -403,7 +414,7 @@ err_free_dev:
   return err;
 }
 
-static struct mk __init *mk_probe() {
+static struct mk __init *mk_probe(void) {
   struct mk *mk;
   int i;
   int count = 0;
@@ -417,7 +428,12 @@ static struct mk __init *mk_probe() {
   }
 
   mutex_init(&mk->mutex);
+//  setup_timer(&mk->timer, mk_timer, (long) mk);
+#ifdef HAVE_TIMER_SETUP
+  timer_setup(&mk->timer, mk_timer, 0);
+#else
   setup_timer(&mk->timer, mk_timer, (long) mk);
+#endif
 
   for (i = 0; i < MK_DEVICES; i++) {
 
